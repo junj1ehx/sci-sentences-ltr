@@ -21,15 +21,39 @@ def BM25_as_relevence_score(caption, doc):
     tokenized_query = query.split(" ")
     cap_doc_scores = bm25.get_scores(tokenized_query)
     # print(cap_doc_scores)
-    rel = np.zeros(len(cap_doc_scores), dtype = np.int)
+    rel = np.zeros(len(cap_doc_scores))
+    # for i in range(len(cap_doc_scores)):
+    #     if (cap_doc_scores[i] <= 0):
+    #         rel[i] = 0
+    #     else:
+    #         rel[i] = cap_doc_scores[i]
+    # return rel
+
     for i in range(len(cap_doc_scores)):
-        if (cap_doc_scores[i] == 0):
+        if (cap_doc_scores[i] <= 0):
             rel[i] = 0
+        elif (cap_doc_scores[i] > 0 and cap_doc_scores[i] <= 1.508445):
+            rel[i] = 1
+        elif (cap_doc_scores[i] > 1.508445 and cap_doc_scores[i] <= 3.282216):
+            rel[i] = 2
+        elif (cap_doc_scores[i] > 3.282216 and cap_doc_scores[i] <= 6.384559):
+            rel[i] = 3
+        elif (cap_doc_scores[i] > 6.384559 and cap_doc_scores[i] <= 12.453971):
+            rel[i] = 4
+        elif (cap_doc_scores[i] > 12.453971):
+            rel[i] = 5
         else:
-            rel[i] = round(cap_doc_scores[i]) + 1
-            if (rel[i] > 9):
-                rel[i] = 9
+            rel[i] = 0
     return rel
+
+    # rel = np.zeros(len(cap_doc_scores), dtype = np.int)
+    # for i in range(len(cap_doc_scores)):
+    #     if (cap_doc_scores[i] <= 0):
+    #         rel[i] = 0
+    #     else:
+    #         rel[i] = 1
+    #
+    # return rel
 
 def feature_extraction(table, doc):
     tokenizer = nltk.data.load('nltk:tokenizers/punkt/english.pickle')
@@ -129,7 +153,8 @@ def preprocess(file_name, docid):
             f.write(output + '\n')
 
 def test():
-    with open('DocBank_samples/7.tar_1601.03015.gz_crs_19.txt', 'r', encoding='utf-8') as f:
+    #with open('DocBank_samples/7.tar_1601.03015.gz_crs_19.txt', 'r', encoding='utf-8') as f:
+    with open('extracted/1.tar_1501.00563.gz_trees_3.txt', 'r', encoding='utf-8') as f:
         raw = [i[:-1].split('\t') for i in f.readlines()]
 
     paragraph = ''
@@ -185,36 +210,42 @@ def test():
 
 
     rel = BM25_as_relevence_score(caption, paragraph)
-    score_all = feature_extraction(table_all, paragraph)
-    score_column = feature_extraction(table_column, paragraph)
-    score_row = feature_extraction(table_row, paragraph)
-    score_oth = feature_extraction(table_others, paragraph)
+    # score_all = feature_extraction(table_all, paragraph)
+    # score_column = feature_extraction(table_column, paragraph)
+    # score_row = feature_extraction(table_row, paragraph)
+    # score_oth = feature_extraction(table_others, paragraph)
 
-    qid = 1 # temp qid
-    doc_id_count = 1 # temp doc_id_count
-    with open('output.txt', 'a+', encoding = 'utf-8') as f:
-        for i in range(len(rel)):
-            output = str(rel[i]) + ' qid:' + str(qid) + ' '
-            for j in range(10):
-                output = output + str(1 + j*4) + ':' + str('%.6f' % score_all[i][j]) + ' ' + str(2 + j*4) + ':' + str('%.6f' % score_column[i][j]) + ' ' + str(3 + j*4) + ':' + str('%.6f' % score_row[i][j]) + ' ' + str(4 + j*4) + ':' + str('%.6f' % score_oth[i][j]) + ' '
-            output = output + '#docid = ' + str(qid) + '-' + str(doc_id_count)
-            doc_id_count += 1
-            f.write(output + '\n')
+    # qid = 1 # temp qid
+    # doc_id_count = 1 # temp doc_id_count
+    # with open('output.txt', 'a+', encoding = 'utf-8') as f:
+    #     for i in range(len(rel)):
+    #         output = str(rel[i]) + ' qid:' + str(qid) + ' '
+    #         for j in range(10):
+    #             output = output + str(1 + j*4) + ':' + str('%.6f' % score_all[i][j]) + ' ' + str(2 + j*4) + ':' + str('%.6f' % score_column[i][j]) + ' ' + str(3 + j*4) + ':' + str('%.6f' % score_row[i][j]) + ' ' + str(4 + j*4) + ':' + str('%.6f' % score_oth[i][j]) + ' '
+    #         output = output + '#docid = ' + str(qid) + '-' + str(doc_id_count)
+    #         doc_id_count += 1
+    #         f.write(output + '\n')
 # calculate BM25 TF IDF TF*IDF
+    tokenizer = nltk.data.load('nltk:tokenizers/punkt/english.pickle')
+    sentences = tokenizer.tokenize(paragraph)
+    tokenized_corpus = [doc.split(" ") for doc in sentences]
+    print(caption)
+    print(paragraph)
+    tokenized_query = table.split(" ")
+    tokenized_query.pop() # remove last empty word
+    bm25 = BM25Okapi(tokenized_corpus)
+    query = table
+    tokenized_query = query.split(" ")
+    table_doc_scores = bm25.get_scores(tokenized_query)
 
-    # bm25 = BM25Okapi(tokenized_corpus)
-    # bm25_2 = BM25Okapi(paragraph)
-    # query = table
-    # tokenized_query = query.split(" ")
-    # table_doc_scores = bm25.get_scores(tokenized_query)
-    #
-    # query = caption
-    # tokenized_query = query.split(" ")
-    # cap_doc_scores = bm25.get_scores(tokenized_query)
+    query = caption
+    tokenized_query = query.split(" ")
+    cap_doc_scores = bm25.get_scores(tokenized_query)
+    print(rel)
     #
     # print(sentences)
-    # print(cap_doc_scores)
-    # print(table_doc_scores)
+    print(cap_doc_scores)
+    print(table_doc_scores)
     # print(cap_doc_scores)
     # print(len(whole_doc_scores))
     # #print(caption)
@@ -265,4 +296,4 @@ if __name__ == '__main__':
                 fw.write(fr.read())
 
 
-    # test()
+   # test()
