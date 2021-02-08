@@ -7,7 +7,7 @@ import random
 def openfile(filename_list_path):
     with open(filename_list_path, 'r', encoding='utf-8') as f:
         return [file.split("\n") for file in f.readlines()]
-        #return [i[:-1].split('\n') for i in f.readlines()]
+        # return [i[:-1].split('\n') for i in f.readlines()]
 
 
 def BM25_as_relevence_score(caption, doc):
