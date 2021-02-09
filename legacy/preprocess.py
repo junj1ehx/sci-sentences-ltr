@@ -145,7 +145,7 @@ def preprocess(file_name, docid):
     doc_id_count = 1 # temp doc_id_count
     with open('output.txt', 'a+', encoding = 'utf-8') as f:
         for i in range(len(rel)):
-            output = str(rel[i]) + ' qid:' + str(qid) + ' '
+            output = str(rel[i]) + ' qid:' + str(doc_id_count) + ' '
             for j in range(10):
                 output = output + str(1 + j*4) + ':' + str('%.6f' % score_all[i][j]) + ' ' + str(2 + j*4) + ':' + str('%.6f' % score_column[i][j]) + ' ' + str(3 + j*4) + ':' + str('%.6f' % score_row[i][j]) + ' ' + str(4 + j*4) + ':' + str('%.6f' % score_oth[i][j]) + ' '
             output = output + '#docid = ' + str(qid) + '-' + str(doc_id_count)

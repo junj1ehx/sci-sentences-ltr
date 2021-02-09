@@ -34,29 +34,29 @@ def BM25_as_relevence_score(caption, doc):
     # print(cap_doc_scores)
     rel = np.zeros(len(cap_doc_scores))
 #cnt
-    for i in range(len(cap_doc_scores)):
-        if cap_doc_scores[i] <= 0:
-            rel[i] = 0
-        else:
-            rel[i] = cap_doc_scores[i]
-    return rel
-# grd
     # for i in range(len(cap_doc_scores)):
-    #     if (cap_doc_scores[i] <= 0):
+    #     if cap_doc_scores[i] <= 0:
     #         rel[i] = 0
-    #     elif (cap_doc_scores[i] > 0 and cap_doc_scores[i] <= 0.918817199):
-    #         rel[i] = 1
-    #     elif (cap_doc_scores[i] > 0.918817199 and cap_doc_scores[i] <= 1.75987574369279):
-    #         rel[i] = 2
-    #     elif (cap_doc_scores[i] > 1.75987574369279 and cap_doc_scores[i] <= 4.595513338):
-    #         rel[i] = 3
-    #     elif (cap_doc_scores[i] > 4.595513338 and cap_doc_scores[i] <= 7.76186500588613):
-    #         rel[i] = 4
-    #     elif (cap_doc_scores[i] > 7.76186500588613):
-    #         rel[i] = 5
     #     else:
-    #         rel[i] = 0
+    #         rel[i] = cap_doc_scores[i]
     # return rel
+#grd
+    for i in range(len(cap_doc_scores)):
+        if (cap_doc_scores[i] <= 0):
+            rel[i] = 0
+        elif (cap_doc_scores[i] > 0 and cap_doc_scores[i] <= 0.918817199):
+            rel[i] = 1
+        elif (cap_doc_scores[i] > 0.918817199 and cap_doc_scores[i] <= 1.75987574369279):
+            rel[i] = 2
+        elif (cap_doc_scores[i] > 1.75987574369279 and cap_doc_scores[i] <= 4.595513338):
+            rel[i] = 3
+        elif (cap_doc_scores[i] > 4.595513338 and cap_doc_scores[i] <= 7.76186500588613):
+            rel[i] = 4
+        elif (cap_doc_scores[i] > 7.76186500588613):
+            rel[i] = 5
+        else:
+            rel[i] = 0
+    return rel
 # bin
     # rel = np.zeros(len(cap_doc_scores), dtype = np.int)
     # for i in range(len(cap_doc_scores)):
@@ -172,15 +172,21 @@ def preprocess(file_name, docid):
     #             '#other:' + table_others + '\n' + '##########' + '\n')
 
     # output the l2r
-    with open('output.txt', 'a+', encoding = 'utf-8') as f:
+    if not os.path.exists('dataset'):
+        os.makedirs('dataset')
+    with open('dataset/output.txt', 'a+', encoding ='utf-8') as f:
         for i in range(len(rel)):
             output = str(rel[i]) + ' qid:' + str(qid) + ' '
             temp = []
+            # 1 -> 4 12 -> 6 123 -> 10
             for j in range(10):
-                temp.append('%.6f' % score_all[i][j])
-                if j != 4 and j != 8 and j != 9:
-                    temp.append('%.6f' % score_row[i][j])
-                    temp.append('%.6f' % score_oth[i][j])
+                if j < 4 or j > 5:
+                #if j < 4:
+                #if j > 5:
+                    temp.append('%.6f' % score_all[i][j])
+                    if j != 4 and j != 8 and j != 9:
+                        temp.append('%.6f' % score_row[i][j])
+                        temp.append('%.6f' % score_oth[i][j])
 # note from cal
 # score_metric[i][0] = total_q[i]
 # score_metric[i][1] = total_idf[i]
@@ -229,7 +235,7 @@ if __name__ == '__main__':
     row_count = 0
     if not os.path.exists('dataset'):
         os.makedirs('dataset')
-    with open('output.txt', 'r') as f:
+    with open('dataset/output.txt', 'r') as f:
         ori = []
         for line in f:
             ori.append(line)
