@@ -33,30 +33,31 @@ def BM25_as_relevence_score(caption, doc):
     cap_doc_scores = bm25.get_scores(tokenized_query)
     # print(cap_doc_scores)
     rel = np.zeros(len(cap_doc_scores))
+#cnt
+    for i in range(len(cap_doc_scores)):
+        if cap_doc_scores[i] <= 0:
+            rel[i] = 0
+        else:
+            rel[i] = cap_doc_scores[i]
+    return rel
+# grd
     # for i in range(len(cap_doc_scores)):
     #     if (cap_doc_scores[i] <= 0):
     #         rel[i] = 0
+    #     elif (cap_doc_scores[i] > 0 and cap_doc_scores[i] <= 0.918817199):
+    #         rel[i] = 1
+    #     elif (cap_doc_scores[i] > 0.918817199 and cap_doc_scores[i] <= 1.75987574369279):
+    #         rel[i] = 2
+    #     elif (cap_doc_scores[i] > 1.75987574369279 and cap_doc_scores[i] <= 4.595513338):
+    #         rel[i] = 3
+    #     elif (cap_doc_scores[i] > 4.595513338 and cap_doc_scores[i] <= 7.76186500588613):
+    #         rel[i] = 4
+    #     elif (cap_doc_scores[i] > 7.76186500588613):
+    #         rel[i] = 5
     #     else:
-    #         rel[i] = cap_doc_scores[i]
+    #         rel[i] = 0
     # return rel
-
-    for i in range(len(cap_doc_scores)):
-        if (cap_doc_scores[i] <= 0):
-            rel[i] = 0
-        elif (cap_doc_scores[i] > 0 and cap_doc_scores[i] <= 1.508445):
-            rel[i] = 1
-        elif (cap_doc_scores[i] > 1.508445 and cap_doc_scores[i] <= 3.282216):
-            rel[i] = 2
-        elif (cap_doc_scores[i] > 3.282216 and cap_doc_scores[i] <= 6.384559):
-            rel[i] = 3
-        elif (cap_doc_scores[i] > 6.384559 and cap_doc_scores[i] <= 12.453971):
-            rel[i] = 4
-        elif (cap_doc_scores[i] > 12.453971):
-            rel[i] = 5
-        else:
-            rel[i] = 0
-    return rel
-
+# bin
     # rel = np.zeros(len(cap_doc_scores), dtype = np.int)
     # for i in range(len(cap_doc_scores)):
     #     if (cap_doc_scores[i] <= 0):
@@ -105,7 +106,7 @@ def doc_number_count(query):
 
 def preprocess(file_name, docid):
     # with open('handcrafted/' + file_name, 'r', encoding='utf-8') as f:
-    with open('extracted/' + file_name, 'r', encoding='utf-8') as f:
+    with open('deimDataset/ddataset/' + file_name, 'r', encoding='utf-8') as f:
         raw = [i[:-1].split('\t') for i in f.readlines()]
 
     paragraph = ''
@@ -157,40 +158,103 @@ def preprocess(file_name, docid):
     score_row = feature_extraction(table_row, paragraph)
     score_oth = feature_extraction(table_others, paragraph)
 
+
     qid = docid # temp qid
     doc_id_count = 1 # temp doc_id_count
+
+    # output the raw
+    # with open ('qd_raw.txt', 'a+', encoding = 'utf-8') as f:
+    #     f.write('##########' + '\n' + '#qid:' + str(qid) + '\n' + '#rel:' + str(rel) + '\n' +
+    #             '#caption:' + caption + '\n' +
+    #             '#paragraph:' + paragraph + '\n' +
+    #             '#table:' + table_all + '\n' +
+    #             '#row:' + table_row + '\n' +
+    #             '#other:' + table_others + '\n' + '##########' + '\n')
+
+    # output the l2r
     with open('output.txt', 'a+', encoding = 'utf-8') as f:
         for i in range(len(rel)):
             output = str(rel[i]) + ' qid:' + str(qid) + ' '
+            temp = []
             for j in range(10):
-                output = output + str(1 + j*4) + ':' + str('%.6f' % score_all[i][j]) + ' ' + str(2 + j*4) + ':' + str('%.6f' % score_column[i][j]) + ' ' + str(3 + j*4) + ':' + str('%.6f' % score_row[i][j]) + ' ' + str(4 + j*4) + ':' + str('%.6f' % score_oth[i][j]) + ' '
+                temp.append('%.6f' % score_all[i][j])
+                if j != 4 and j != 8 and j != 9:
+                    temp.append('%.6f' % score_row[i][j])
+                    temp.append('%.6f' % score_oth[i][j])
+# note from cal
+# score_metric[i][0] = total_q[i]
+# score_metric[i][1] = total_idf[i]
+# score_metric[i][2] = total_q[i] * total_idf[i]
+# score_metric[i][3] = score[i]
+# score_metric[i][4] = doc_len[i]
+# score_metric[i][5] = query_len[i]
+# score_metric[i][6] = query_num[i]
+# score_metric[i][7] = query_nonnum[i]
+# table_doc_scores[i][8] = doc_num[i]
+# table_doc_scores[i][9] = doc_nonnum[i]
+
+
+            # for i in range(len(temp)):
+                # output = output + str('%.6f' % score_all[i][j]) + ' ' + str('%.6f' % score_row[i][j]) + ' ' + str('%.6f' % score_oth[i][j]) + ' '
+            for i in range(len(temp)):
+                output = output + str(1 + i) + ':' + temp[i] + ' '
+
+            # (i) TF, IDF, TF*IDF, BM25
+            # for j in range(4):
+            #     output = output + str(1 + j*3) + ':' + str('%.6f' % score_all[i][j]) + ' ' + str(2 + j*3) + ':' + str('%.6f' % score_row[i][j]) + ' ' + str(3 + j*3) + ':' + str('%.6f' % score_oth[i][j]) + ' '
+            # # (ii)
+            # output = output + str(13) + ':' + str('%.6f' % score_all[i][4])
+            # output = output + str(14) + ':' + str('%.6f' % score_all[i][5]) + ' ' + str(15) + ':' + str('%.6f' % score_row[i][5]) + ' ' + str(16) + ':' + str('%.6f' % score_oth[i][5]) + ' '
+            # # (iii)
+            # output = output + str(17) + ':' + str('%.6f' % score_all[i][6]) + ' ' + str(18) + ':' + str('%.6f' % score_row[i][6]) + ' ' + str(19) + ':' + str('%.6f' % score_oth[i][6]) + ' '
+            # output = output + str(20) + ':' + str('%.6f' % score_all[i][7]) + ' ' + str(21) + ':' + str('%.6f' % score_row[i][7]) + ' ' + str(22) + ':' + str('%.6f' % score_oth[i][7]) + ' '
+            # output = output + str(23) + ':' + str('%.6f' % score_all[i][8]) + ' '
+            # output = output + str(24) + ':' + str('%.6f' % score_all[i][9]) + ' '
             output = output + '#docid = ' + str(qid) + '-' + str(doc_id_count)
             doc_id_count += 1
             f.write(output + '\n')
 
 if __name__ == '__main__':
-    filename_list_path = 'filelist.txt'
+    filename_list_path = 'F:\PycharmProject\deim\deimDataset\one-column.txt'
     filename_list = openfile(filename_list_path)
     print("extracting features from documents...")
 
     for i in range(len(filename_list)):
         preprocess(filename_list[i][0], i+1)
-        with open('log.txt', 'a+', encoding='utf-8') as f:
+        with open('old/log.txt', 'a+', encoding='utf-8') as f:
             f.write(filename_list[i][0] + '\n')
-        print('file' + filename_list[i][0] + ' preprocessed' + '(' + str(i+1) + '/' + str(1000) + ')')
+        print('file' + filename_list[i][0] + ' preprocessed' + '(' + str(i+1) + '/' + str(500) + ')')
 
     print("dividing files...")
     row_count = 0
+    if not os.path.exists('dataset'):
+        os.makedirs('dataset')
     with open('output.txt', 'r') as f:
         ori = []
         for line in f:
             ori.append(line)
             row_count += 1
         print(str(row_count) + 'query-document pairs in total')
-        print(ori)
+        # print(ori)
         divide_num = row_count / 5
         for i in range(len(ori)):
             temp_num = random.randint(1,5)
             with open('dataset/' + 'S' + str(temp_num) + '.txt', 'a+', encoding='utf-8') as file:
                 file.write(ori[i])
                 print(str(i + 1) + '/' + str(len(ori)) + '\n')
+
+    print("folding...")
+    for i in range(5):
+        path = 'dataset/Fold' + str(i + 1)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        with open(path + '/' + 'train.txt', 'a+', encoding='utf-8') as fw:
+            for j in range(3):
+                with open('dataset/S' + str((i + j) % 5 + 1) + '.txt', 'r', encoding='utf-8') as fr:
+                    fw.write(fr.read())
+        with open(path + '/' + 'vali.txt', 'a+', encoding='utf-8') as fw:
+            with open('dataset/S' + str((i + 4) % 5 + 1) + '.txt', 'r', encoding='utf-8') as fr:
+                fw.write(fr.read())
+        with open(path + '/' + 'test.txt', 'a+', encoding='utf-8') as fw:
+            with open('dataset/S' + str((i + 5) % 5 + 1) + '.txt', 'r', encoding='utf-8') as fr:
+                fw.write(fr.read())

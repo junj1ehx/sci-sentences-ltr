@@ -17,3 +17,7 @@ DocBank_500K_txt/
 *.jpg
 *.pdf
 *.rar
+ext/__pycache__/rank_bm25.cpython-38.pyc
+~$deim.xlsx
+deim.xlsx
+ext/__pycache__/rank_bm25.cpython-38.pyc
