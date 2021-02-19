@@ -1,0 +1,13 @@
+1: install ptranking and its requirements: https://wildltr.github.io/ptranking/
+2: because format of dataset for deim are followed the 'MQ2008_Super' dataset in LETOR, I used the default setting of 'MQ2008_Super' dataset in ptranking library.
+3: because all test dataset have different numbers of features, change the .../ptranking/data/data_utils.py in where you installed ptranking in python library to run the model
+
+###
+details of 3:
+    elif data_id in MSLETOR_SUPER:
+        max_rele_level = None <- set this to adopt continuous label before running
+        label_type = LABEL_TYPE.MultiLabel
+        num_features = 24 <- change this number when you change your test dataset
+        has_comment = True
+        fold_num = 5
+###
