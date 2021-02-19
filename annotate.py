@@ -4,7 +4,7 @@ from ext.rank_bm25 import BM25Okapi
 import numpy as np
 import shutil
 import random
-
+import re
 
 listPath = 'F:\PycharmProject\deim\one-column.txt'
 output = 'F:\PycharmProject\deim\DocBank_500K_txt\ddataset'
@@ -34,29 +34,29 @@ def BM25_as_relevence_score(caption, doc):
     # print(cap_doc_scores)
     rel = np.zeros(len(cap_doc_scores))
 #cnt
-    # for i in range(len(cap_doc_scores)):
-    #     if cap_doc_scores[i] <= 0:
-    #         rel[i] = 0
-    #     else:
-    #         rel[i] = cap_doc_scores[i]
-    # return rel
-#grd
     for i in range(len(cap_doc_scores)):
-        if (cap_doc_scores[i] <= 0):
+        if cap_doc_scores[i] <= 0:
             rel[i] = 0
-        elif (cap_doc_scores[i] > 0 and cap_doc_scores[i] <= 0.918817199):
-            rel[i] = 1
-        elif (cap_doc_scores[i] > 0.918817199 and cap_doc_scores[i] <= 1.75987574369279):
-            rel[i] = 2
-        elif (cap_doc_scores[i] > 1.75987574369279 and cap_doc_scores[i] <= 4.595513338):
-            rel[i] = 3
-        elif (cap_doc_scores[i] > 4.595513338 and cap_doc_scores[i] <= 7.76186500588613):
-            rel[i] = 4
-        elif (cap_doc_scores[i] > 7.76186500588613):
-            rel[i] = 5
         else:
-            rel[i] = 0
+            rel[i] = cap_doc_scores[i]
     return rel
+#grd
+    # for i in range(len(cap_doc_scores)):
+    #     if (cap_doc_scores[i] <= 0):
+    #         rel[i] = 0
+    #     elif (cap_doc_scores[i] > 0 and cap_doc_scores[i] <= 0.918817199):
+    #         rel[i] = 1
+    #     elif (cap_doc_scores[i] > 0.918817199 and cap_doc_scores[i] <= 1.75987574369279):
+    #         rel[i] = 2
+    #     elif (cap_doc_scores[i] > 1.75987574369279 and cap_doc_scores[i] <= 4.595513338):
+    #         rel[i] = 3
+    #     elif (cap_doc_scores[i] > 4.595513338 and cap_doc_scores[i] <= 7.76186500588613):
+    #         rel[i] = 4
+    #     elif (cap_doc_scores[i] > 7.76186500588613):
+    #         rel[i] = 5
+    #     else:
+    #         rel[i] = 0
+    # return rel
 # bin
     # rel = np.zeros(len(cap_doc_scores), dtype = np.int)
     # for i in range(len(cap_doc_scores)):
@@ -96,11 +96,14 @@ def doc_number_count(query):
     for i in range(len(query)):
         tagged_tokenized_query = nltk.pos_tag(query[i])
         count_num = 0
+        count_nonnum = 0
         for j in range(len(query[i])):
             if (tagged_tokenized_query[j][1] == 'CD'):
                 count_num += 1
-        doc_num[i] = count_num / len(query) # ratio of number of D
-        doc_nonnum[i] = (len(query) - count_num) / len(query)  # ratio of non number of D
+            else:
+                count_nonnum += 1
+        doc_num[i] = count_num / (count_num + count_nonnum) # ratio of number of D
+        doc_nonnum[i] = count_nonnum / (count_num + count_nonnum)  # ratio of non number of D
     return doc_num, doc_nonnum
 
 
@@ -179,14 +182,31 @@ def preprocess(file_name, docid):
             output = str(rel[i]) + ' qid:' + str(qid) + ' '
             temp = []
             # 1 -> 4 12 -> 6 123 -> 10
-            for j in range(10):
-                if j < 4 or j > 5:
+            for j in range(4):
+                #if j < 4 or j > 5:
                 #if j < 4:
                 #if j > 5:
-                    temp.append('%.6f' % score_all[i][j])
-                    if j != 4 and j != 8 and j != 9:
-                        temp.append('%.6f' % score_row[i][j])
-                        temp.append('%.6f' % score_oth[i][j])
+                temp.append('%.6f' % score_all[i][j])
+                if j != 4 and j != 8 and j != 9:
+                    # temp.append('%.6f' % score_row[i][j])
+                    temp.append('%.6f' % score_oth[i][j])
+
+            # 4->13 5-> 14 6,7 -> 17 8,9 -> 23
+            feature_num = 4
+            temp.append('%.6f' % score_all[i][feature_num])
+            if feature_num != 4 and feature_num != 8 and feature_num != 9:
+                # temp.append('%.6f' % score_row[i][feature_num])
+                temp.append('%.6f' % score_oth[i][feature_num])
+            feature_num = 8
+            temp.append('%.6f' % score_all[i][feature_num])
+            if feature_num != 4 and feature_num != 8 and feature_num != 9:
+                # temp.append('%.6f' % score_row[i][feature_num])
+                temp.append('%.6f' % score_oth[i][feature_num])
+            feature_num = 9
+            temp.append('%.6f' % score_all[i][feature_num])
+            if feature_num != 4 and feature_num != 8 and feature_num != 9:
+                # temp.append('%.6f' % score_row[i][feature_num])
+                temp.append('%.6f' % score_oth[i][feature_num])
 # note from cal
 # score_metric[i][0] = total_q[i]
 # score_metric[i][1] = total_idf[i]
@@ -204,6 +224,7 @@ def preprocess(file_name, docid):
                 # output = output + str('%.6f' % score_all[i][j]) + ' ' + str('%.6f' % score_row[i][j]) + ' ' + str('%.6f' % score_oth[i][j]) + ' '
             for i in range(len(temp)):
                 output = output + str(1 + i) + ':' + temp[i] + ' '
+                # output = output + temp[i] + ' '
 
             # (i) TF, IDF, TF*IDF, BM25
             # for j in range(4):
@@ -220,34 +241,55 @@ def preprocess(file_name, docid):
             doc_id_count += 1
             f.write(output + '\n')
 
+def make_dataset():
+    with open('dataset/output.txt', 'r', encoding='utf-8') as f:
+        raw = [i[:-1].split('\n') for i in f.readlines()]
+        temp_num = '1'
+        temp_list = []
+        querylist = {}
+        i = 1
+        for line in raw:
+            query = line[0].split(' ')
+            #print(query)
+            num_match = re.compile('.*(?=[\-])')
+            num = num_match.match(query[-1]).group(0)
+            if temp_num != num:
+                querylist[i] = temp_list
+                i += 1
+                temp_list = []
+                temp_list.append(line[0])
+            else:
+                temp_list.append(line[0])
+            temp_num = num
+        querylist[i] = temp_list
+    np.random.seed(100)
+    list_num = np.arange(1,501)
+    np.random.shuffle(list_num)
+
+    i = 0
+    for num in list_num:
+        with open('dataset/S' + str(i % 5 + 1) + '.txt', 'a', encoding='utf-8') as f:
+            for query in querylist[list_num[i]]:
+                f.write(query + '\n')
+            i += 1
+
 if __name__ == '__main__':
     filename_list_path = 'F:\PycharmProject\deim\deimDataset\one-column.txt'
     filename_list = openfile(filename_list_path)
+    random.seed(100)
     print("extracting features from documents...")
 
     for i in range(len(filename_list)):
         preprocess(filename_list[i][0], i+1)
         with open('old/log.txt', 'a+', encoding='utf-8') as f:
             f.write(filename_list[i][0] + '\n')
-        print('file' + filename_list[i][0] + ' preprocessed' + '(' + str(i+1) + '/' + str(500) + ')')
+        #print('file' + filename_list[i][0] + ' preprocessed' + '(' + str(i+1) + '/' + str(500) + ')')
 
     print("dividing files...")
     row_count = 0
     if not os.path.exists('dataset'):
         os.makedirs('dataset')
-    with open('dataset/output.txt', 'r') as f:
-        ori = []
-        for line in f:
-            ori.append(line)
-            row_count += 1
-        print(str(row_count) + 'query-document pairs in total')
-        # print(ori)
-        divide_num = row_count / 5
-        for i in range(len(ori)):
-            temp_num = random.randint(1,5)
-            with open('dataset/' + 'S' + str(temp_num) + '.txt', 'a+', encoding='utf-8') as file:
-                file.write(ori[i])
-                print(str(i + 1) + '/' + str(len(ori)) + '\n')
+    make_dataset()
 
     print("folding...")
     for i in range(5):
